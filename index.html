@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+		body{background: white;}
+		canvas{width: 900px; max-width: 100%;}
+	</style>
+</head>
+<body>
+    <h1 id="titletext">점묘화 만들기</h1>
+    점 크기 <input type="range" id="size1" min="1" max="16" value="4"><br>
+    점 간격 <input type="range" id="gap1" min="4" max="20" value="6"><br>
+    대비 <input type="range" id="con1" min="0" max="200" value="100"><br>
+    채도 <input type="range" id="sat1" min="0" max="250" value="145"><br>
+    <canvas id="canvas1" width="900" height="608"></canvas>
+
+    <script src="image.js"></script>
+    <script>
+    	var ctx = canvas1.getContext("2d");
+    	var small = document.createElement("canvas");
+    	var img = new Image();
+    	img.src = imgdata;
+
+    	function limit(v){
+    		return Math.max(0, Math.min(255, v));
+    	}
+
+    	function draw(){
+    		var size = Number(size1.value);
+    		var gap = Number(gap1.value);
+    		var con = con1.value / 100;
+    		var sat = sat1.value / 100;
+    		var cols = Math.ceil(900 / gap);
+    		var rows = Math.ceil(608 / gap);
+
+    		small.width = cols;
+    		small.height = rows;
+    		var sc = small.getContext("2d");
+    		sc.drawImage(img, 0, 0, cols, rows);
+    		var d = sc.getImageData(0, 0, cols, rows).data;
+
+    		ctx.fillStyle = "#17130f";
+    		ctx.fillRect(0, 0, 900, 608);
+
+    		for(var y = 0; y < rows; y++){
+    			for(var x = 0; x < cols; x++){
+    				var i = (y * cols + x) * 4;
+
+    				
+    				var lum0 = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+    				var dl = limit((lum0 - 128) * con + 128) - lum0;
+    				var r = limit(d[i] + dl);
+    				var g = limit(d[i+1] + dl);
+    				var b = limit(d[i+2] + dl);
+    				var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    				
+    				var gray = 0.299 * r + 0.587 * g + 0.114 * b;
+    				r = limit(gray + (r - gray) * sat);
+    				g = limit(gray + (g - gray) * sat);
+    				b = limit(gray + (b - gray) * sat);
+
+    				
+    				var rad = size * (0.35 + 0.75 * lum);
+
+    				ctx.fillStyle = "rgb("+Math.floor(r)+","+Math.floor(g)+","+Math.floor(b)+")";
+    				ctx.beginPath();
+    				ctx.arc(x * gap + gap / 2, y * gap + gap / 2, rad, 0, Math.PI * 2);
+    				ctx.fill();
+    			}
+    		}
+    	}
+
+    	img.onload = draw;
+    	size1.oninput = function(){
+    		draw();
+    	}
+    	gap1.oninput = function(){
+    		draw();
+    	}
+    	con1.oninput = function(){
+    		draw();
+    	}
+    	sat1.oninput = function(){
+    		draw();
+    	}
+    </script>
+</body>
+</html>
